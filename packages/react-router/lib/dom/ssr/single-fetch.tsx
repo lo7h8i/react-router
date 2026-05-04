@@ -1,6 +1,9 @@
 import * as React from "react";
 
-import { decode } from "../../../vendor/turbo-stream-v2/turbo-stream";
+import {
+  SUPPORTED_ERROR_TYPES,
+  decode,
+} from "../../../vendor/turbo-stream-v2/turbo-stream";
 import type { Router as DataRouter } from "../../router/router";
 import { isDataWithResponseInit, isResponse } from "../../router/router";
 import type {
@@ -15,6 +18,7 @@ import {
   redirect,
   data,
   stripBasename,
+  removeTrailingSlash,
 } from "../../router/utils";
 import { createRequestInit } from "./data";
 import type { AssetsManifest, EntryContext } from "./entry";
@@ -639,9 +643,9 @@ export function singleFetchUrl(
     if (url.pathname === "/") {
       url.pathname = `_root.${extension}`;
     } else if (basename && stripBasename(url.pathname, basename) === "/") {
-      url.pathname = `${basename.replace(/\/$/, "")}/_root.${extension}`;
+      url.pathname = `${removeTrailingSlash(basename)}/_root.${extension}`;
     } else {
-      url.pathname = `${url.pathname.replace(/\/$/, "")}.${extension}`;
+      url.pathname = `${removeTrailingSlash(url.pathname)}.${extension}`;
     }
   }
 
@@ -756,8 +760,13 @@ export function decodeViaTurboStream(
             string | undefined,
           ];
           let Constructor = Error;
-          // @ts-expect-error
-          if (name && name in global && typeof global[name] === "function") {
+          if (
+            name &&
+            SUPPORTED_ERROR_TYPES.includes(name) &&
+            name in global &&
+            // @ts-expect-error
+            typeof global[name] === "function"
+          ) {
             // @ts-expect-error
             Constructor = global[name];
           }
